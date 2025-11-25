@@ -1,0 +1,18 @@
+{
+  "name": "com.foxino.ouroboros.common",
+  "version": "1.0.0",
+  "displayName": "Foxino-Ouroboros Unity Common",
+  "description": "A collection of shared scripts and tools from Ouroboros' Unity projects, using by Foxino.",
+  "unity": "2021.3",
+  "unityRelease": "0f1",
+  "keywords": [
+    "shared",
+    "utilities",
+    "tools"
+  ],
+  "author": {
+    "name": "Ouroboros",
+    "email": "contact@ouroboros.com",
+    "url": "https://www.ouroborosoft.com"
+  }
+}
