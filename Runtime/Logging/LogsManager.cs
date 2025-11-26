@@ -27,10 +27,10 @@ namespace Ouroboros.Common.Logging
             {
                 foreach (var active in activeLogContexts.Contexts)
                 {
-                    var type = Type.GetType(active.Type);
+                    var type = GetTypeFromContext(active);
                     if (type == null)
                     {
-                        Debug.LogError($"[LogsManager] Cannot activate or deactivate Type! Missing Type={active.Type}");
+                        Debug.LogError($"[LogsManager] Cannot activate or deactivate Type! Missing Assembly={active.Assembly}, Type={active.Type}");
                         continue;
                     }
 
@@ -49,6 +49,36 @@ namespace Ouroboros.Common.Logging
 
 #endif
 
+        }
+
+        private static Type GetTypeFromContext(ActiveLogContexts.Context context)
+        {
+            // If assembly is specified, look in that specific assembly
+            if (!string.IsNullOrEmpty(context.Assembly))
+            {
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                foreach (var assembly in assemblies)
+                {
+                    if (assembly.GetName().Name == context.Assembly)
+                    {
+                        var type = assembly.GetType(context.Type);
+                        if (type != null)
+                        {
+                            return type;
+                        }
+                    }
+                }
+            }
+
+            // Fallback: try Type.GetType which searches mscorlib and executing assembly
+            var fallbackType = Type.GetType(context.Type);
+            if (fallbackType != null)
+            {
+                return fallbackType;
+            }
+
+            // Final fallback: search all assemblies
+            return GetType(context.Type);
         }
 
         public static Type GetType(string typeName)

@@ -156,6 +156,7 @@ namespace Ouroboros.Common.Logging
 
                     contexts.Contexts[contexts.Contexts.Length - 1] = new ActiveLogContexts.Context
                     {
+                        Assembly = type.Assembly.GetName().Name,
                         IsActive = true,
                         Type = type.FullName
                     };

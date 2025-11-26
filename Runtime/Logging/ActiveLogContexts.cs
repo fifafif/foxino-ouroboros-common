@@ -9,6 +9,7 @@ namespace Ouroboros.Common.Logging
         [Serializable]
         public class Context
         {
+            public string Assembly;
             public string Type;
             public bool IsActive;
 
