@@ -1,0 +1,19 @@
+{
+    "name": "com.foxino.ouroboros.common.editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:94a737e3a10d942b980780b32c026780",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
