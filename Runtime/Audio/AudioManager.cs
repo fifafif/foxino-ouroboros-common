@@ -42,6 +42,8 @@ namespace Ouroboros.Common.Audio
         [Range(0f, 1f)]
         public float VoiceVolume = 1f;
 
+        [SerializeField] public bool isMusicEnabledByDefault = true;
+
         private float baseMasterVolume;
         private float baseMusicVolume;
         private float baseSfxVolume;
@@ -106,7 +108,7 @@ namespace Ouroboros.Common.Audio
             musicVolumeMultiplier = PlayerPrefs.GetFloat(MusicVolumeKey, 1f);
             sfxVolumeMultiplier = PlayerPrefs.GetFloat(SFXVolumeKey, 1f);
 
-            IsMusicEnabled = PlayerPrefs.GetInt(MusicEnabledKey, 1) == 1;
+            IsMusicEnabled = PlayerPrefs.GetInt(MusicEnabledKey, isMusicEnabledByDefault ? 1 : 0) == 1;
             IsSFXEnabled = PlayerPrefs.GetInt(SFXEnabledKey, 1) == 1;
 
             CalculateMusicVolume();
