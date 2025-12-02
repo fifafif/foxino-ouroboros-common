@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.XR;
 
 namespace Ouroboros.Common.Performance.Trackers
 {
@@ -11,7 +10,7 @@ namespace Ouroboros.Common.Performance.Trackers
 
         void Start()
         {
-            Target = Mathf.RoundToInt(XRDevice.refreshRate);
+            Target = 60;//Mathf.RoundToInt(XRDevice.refreshRate);
         }
         
         void Update()
