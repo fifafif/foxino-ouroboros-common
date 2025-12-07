@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Ouroboros.Common.Logging;
 using Ouroboros.Common.Services;
@@ -114,12 +115,49 @@ namespace Ouroboros.Common.Audio
 
             IsPlaying = true;
             isPaused = false;
-            
-            audioId = AudioManager.instance.PlayMusic(clip.AudioClip, audioSource, OnMusicFinish, fadeInDuration);
-            PlayingClip = clip;
-            OnMusicPlay?.Invoke(clip);
-            
+
+            // Check if we need to load from StreamingAssets
+            if (clip.AudioClip == null && !string.IsNullOrEmpty(clip.StreamingAssetsPath))
+            {
+                StartCoroutine(PlayFromStreamingAssets(clip));
+            }
+            else
+            {
+                audioId = AudioManager.instance.PlayMusic(clip.AudioClip, audioSource, OnMusicFinish, fadeInDuration);
+                PlayingClip = clip;
+                OnMusicPlay?.Invoke(clip);
+            }
+
             return clip;
+        }
+
+        private IEnumerator PlayFromStreamingAssets(MusicClipData clip)
+        {
+            Logs.Debug<AudioManager>($"MusicPlayer loading from StreamingAssets: {clip.StreamingAssetsPath}");
+
+            AudioType audioType = AudioStreamingLoader.GetAudioTypeFromPath(clip.StreamingAssetsPath);
+            AudioClip loadedClip = null;
+
+            yield return AudioStreamingLoader.LoadAudioClip(
+                clip.StreamingAssetsPath,
+                (clip) => loadedClip = clip,
+                audioType);
+
+            if (loadedClip != null)
+            {
+                // Cache the loaded clip for future use
+                clip.AudioClip = loadedClip;
+
+                audioId = AudioManager.instance.PlayMusic(loadedClip, audioSource, OnMusicFinish, fadeInDuration);
+                PlayingClip = clip;
+                OnMusicPlay?.Invoke(clip);
+            }
+            else
+            {
+                Logs.Error<AudioManager>($"Failed to load audio from StreamingAssets: {clip.StreamingAssetsPath}");
+                IsPlaying = false;
+                OnMusicFinish();
+            }
         }
 
         public void Pause()

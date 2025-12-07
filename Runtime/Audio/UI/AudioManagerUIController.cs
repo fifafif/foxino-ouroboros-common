@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -30,6 +31,12 @@ namespace Ouroboros.Common.Audio.UI
         {
             SetupButtons();
             AudioManager.RegisterForOnLoadedEvent(UpdateButtonVisuals);
+            AudioManager.RegisterOnMusicEnabled(OnMusicEnabled);
+        }
+
+        private void OnMusicEnabled(bool isEnabled)
+        {
+            UpdateButtonVisuals();
         }
 
         private void SetupButtons()

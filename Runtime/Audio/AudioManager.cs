@@ -25,6 +25,7 @@ namespace Ouroboros.Common.Audio
         public Action<PlayingAudio> OnMusicPlay { get; set; }
         public AudioDatabase[] Databases => databases;
         public RegisteredCallback OnSettingsLoaded { get; private set; } = new RegisteredCallback();
+        public Action<bool> OnMusicEnabled { get; set; }
 
         [SerializeField] private AudioDatabase[] databases;
         [SerializeField] private AudioMixer mixer;
@@ -64,6 +65,7 @@ namespace Ouroboros.Common.Audio
         private AudioClip lastPlayedSoundClip;
         private bool hasInit;
         private Dictionary<string, MusicPlayer> musicPlayers = new Dictionary<string, MusicPlayer>();
+        private static string StreamingAssetsPath;
 
         private void Awake()
         {
@@ -78,10 +80,38 @@ namespace Ouroboros.Common.Audio
             Init();
         }
 
+        public static void SetStreamingAssetsPath(string path)
+        {
+            Logs.Debug<AudioManager>($"SetStreamingAssetsPath path={path}");
+            StreamingAssetsPath = path;
+        }
+
+        public static string GetStreamingAssetsPath()
+        {
+            if (!string.IsNullOrEmpty(StreamingAssetsPath))
+            {
+                return StreamingAssetsPath;
+            }
+
+            return Application.streamingAssetsPath;
+        }
+
         public static void RegisterForOnLoadedEvent(Action onLoaded)
         {
             Assert.IsNotNull(instance, AssertMessage);
             instance.OnSettingsLoaded.Register(onLoaded);
+        }
+
+        public static void RegisterOnMusicEnabled(Action<bool> onEnabled)
+        {
+            Assert.IsNotNull(instance, AssertMessage);
+            instance.OnMusicEnabled += onEnabled;
+        }
+
+        public static void UnregisterOnMusicEnabled(Action<bool> onEnabled)
+        {
+            Assert.IsNotNull(instance, AssertMessage);
+            instance.OnMusicEnabled -= onEnabled;
         }
 
         private void Start()
@@ -248,6 +278,8 @@ namespace Ouroboros.Common.Audio
 
             CalculateMusicVolume();
             SetMusicMixerVolume(MusicVolume);
+
+            OnMusicEnabled?.Invoke(enabled);
 
             PlayerPrefs.SetInt(MusicEnabledKey, IsMusicEnabled ? 1 : 0);
             PlayerPrefs.Save();

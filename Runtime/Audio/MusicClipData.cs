@@ -7,6 +7,7 @@ namespace Ouroboros.Common.Audio
     public class MusicClipData
     {
         public AudioClip AudioClip;
+        public string StreamingAssetsPath;
         public string Name;
         public string Author;
         public string Album;

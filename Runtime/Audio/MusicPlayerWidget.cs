@@ -15,8 +15,11 @@ namespace Ouroboros.Common.Audio
         [SerializeField] private MusicPlayer musicPlayer;
         [SerializeField] private Button playButton;
         [SerializeField] private Button stopButton;
+        [SerializeField] private Button nextButton;
+        [SerializeField] private Button prevButton;
         [SerializeField] private TextMeshProUGUI nameText;
         [SerializeField] private GameObject playingContainer;
+        [SerializeField] private bool isOverridingMusicEnabledState;
 
         private void Awake()
         {
@@ -32,7 +35,22 @@ namespace Ouroboros.Common.Audio
                 stopButton.onClick.AddListener(OnClickStop);
             }
 
+            if (nextButton != null)
+            {
+                nextButton.onClick.AddListener(OnClickNext);
+            }
+
+            if (prevButton != null)
+            {
+                prevButton.onClick.AddListener(OnClickPrev);
+            }
+
             UpdateUIState(false);
+        }
+
+        private void OnClickPrev()
+        {
+            musicPlayer.PlayPrev();
         }
 
         private void OnEnable()
@@ -109,6 +127,11 @@ namespace Ouroboros.Common.Audio
         public void OnClickNext()
         {
             musicPlayer.PlayNext();
+
+            if (isOverridingMusicEnabledState)
+            {
+                AudioManager.SetMusicEnabled(true);
+            }
         }
 
         private void UpdateUIState()
