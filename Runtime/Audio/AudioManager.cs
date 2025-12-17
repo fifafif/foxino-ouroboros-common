@@ -522,6 +522,8 @@ namespace Ouroboros.Common.Audio
 
         public static void StopSound(int id, float fadeOutTime)
         {
+            if (instance == null) return;
+            
             instance.StopSoundInternal(id, fadeOutTime);
         }
 
