@@ -160,6 +160,17 @@ namespace Ouroboros.Common.Utils.Transforms
             }
         }
 
+        public static void DestroyAllChildrenExcept(this Transform transform, GameObject keelAlive)
+        {
+            for (int i = transform.childCount - 1; i >= 0; --i)
+            {
+                var child = transform.GetChild(i);
+                if (child.gameObject == keelAlive) continue;
+
+                GameObject.Destroy(child.gameObject);
+            }
+        }
+
         public static void DestroyImmediateAllChildren(this Transform transform)
         {
             for (int i = transform.childCount - 1; i >= 0; --i)
