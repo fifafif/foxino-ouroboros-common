@@ -33,16 +33,5 @@ namespace Ouroboros.Common.Utils
 
             onFinish?.Invoke();
         }
-
-        public static IEnumerator WaitForFinish(this PlayableDirector director, Action onFinish = null)
-        {
-            do
-            {
-                yield return null;
-            }
-            while (director.state == PlayState.Playing);
-
-            onFinish?.Invoke();
-        }
     }
 }
