@@ -94,5 +94,12 @@ namespace Ouroboros.Common.Utils.UIElements
             header.style.paddingTop = 10;
             element.Add(header);
         }
+
+        public static void AddSpace(this VisualElement element, float height = 10f)
+        {
+            var space = new VisualElement();
+            space.style.height = height;
+            element.Add(space);
+        }
     }
 }
