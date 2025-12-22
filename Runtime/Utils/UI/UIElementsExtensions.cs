@@ -78,15 +78,19 @@ namespace Ouroboros.Common.Utils.UIElements
             return button;
         }
 
-        public static VisualElement AddRow(this VisualElement element)
+        public static VisualElement AddRow(this VisualElement element, bool isFlexGrow = false)
         {
-            var row = new VisualElement();
-            row.style.flexDirection = FlexDirection.Row;
-            element.Add(row);
+            VisualElement visualElement = new VisualElement();
+            visualElement.style.flexDirection = FlexDirection.Row;
+            if (isFlexGrow)
+            {
+                visualElement.style.flexGrow = 1f;
+            }
 
-            return row;
+            element.Add(visualElement);
+            return visualElement;
         }
-
+        
         public static void AddHeader(this VisualElement element, string label)
         {
             var header = new Label(label);
