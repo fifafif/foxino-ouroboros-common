@@ -14,6 +14,7 @@ namespace Ouroboros.Common.Pooling
             set { name = value; }
         }
 
+        public int Id { get; private set; }
         public GameObject Prefab => prefab;
         public bool IsEnablingObjectOnSpawn { get; set; } = true;
         public Action<Pool, GameObject> OnObjectInstantiatedInPool { get; set; }
@@ -55,6 +56,11 @@ namespace Ouroboros.Common.Pooling
         public void Init()
         {
             InstantiateObjects(poolCount);
+        }
+
+        public void SetId(int id)
+        {
+            Id = id;
         }
 
         public GameObject Spawn()

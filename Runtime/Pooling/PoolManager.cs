@@ -60,6 +60,7 @@ namespace Ouroboros.Common.Pooling
         public void AddPool(Pool pool, string poolName = null)
         {
             var id = pool.Prefab.GetInstanceID();
+            pool.SetId(id);
             poolName = poolName.IfNullOrEmptyReturnOther(pool.Prefab.name);
 
             if (poolMap.ContainsKey(id))
@@ -82,6 +83,12 @@ namespace Ouroboros.Common.Pooling
         public Pool GetPool(string poolName)
         {
             namePoolMap.TryGetValue(poolName, out var pool);
+            return pool;
+        }
+
+        public Pool GetPool(int poolId)
+        {
+            poolMap.TryGetValue(poolId, out var pool);
             return pool;
         }
 
