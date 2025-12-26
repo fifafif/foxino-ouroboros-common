@@ -4,6 +4,7 @@ namespace Ouroboros.Common.Utils.Physics
 {
     public struct RigidbodyData
     {
+        public bool HasData { get; private set; }
         public Vector3 Velocity;
         public Vector3 AngularVelocity;
         public RigidbodyConstraints Constraints;
@@ -12,6 +13,7 @@ namespace Ouroboros.Common.Utils.Physics
         {
             return new RigidbodyData
             {
+                HasData = true,
                 Velocity = rigidbody.linearVelocity,
                 AngularVelocity = rigidbody.angularVelocity,
                 Constraints = rigidbody.constraints
