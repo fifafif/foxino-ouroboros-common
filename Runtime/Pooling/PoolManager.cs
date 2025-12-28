@@ -12,9 +12,10 @@ namespace Ouroboros.Common.Pooling
         [SerializeField] private List<Pool> pools = new List<Pool>();
         [SerializeField] private List<Pool> runtimePools = new List<Pool>();
 
-        private Dictionary<int, Pool> poolMap = new Dictionary<int, Pool>();
-        private Dictionary<string, Pool> namePoolMap = new Dictionary<string, Pool>();
-        private Dictionary<string, PoolObjectRequest> requestMap = new Dictionary<string, PoolObjectRequest>();
+        private readonly Dictionary<int, Pool> poolMap = new Dictionary<int, Pool>();
+        private readonly Dictionary<string, Pool> namePoolMap = new Dictionary<string, Pool>();
+        private readonly Dictionary<string, PoolObjectRequest> requestMap = new Dictionary<string, PoolObjectRequest>();
+        private readonly Dictionary<int, Pool> poolObjectMap = new Dictionary<int, Pool>();
 
         private void Awake()
         {
@@ -74,9 +75,9 @@ namespace Ouroboros.Common.Pooling
             namePoolMap.Add(poolName, pool);
         }
 
-        public Pool GetPool(GameObject gameObject)
+        public Pool GetPool(GameObject prefab)
         {
-            poolMap.TryGetValue(gameObject.GetInstanceID(), out var pool);
+            poolMap.TryGetValue(prefab.GetInstanceID(), out var pool);
             return pool;
         }
 
@@ -102,7 +103,18 @@ namespace Ouroboros.Common.Pooling
                 return null;
             }
 
-            return pool.Spawn();
+            return SpawnFromPool(pool);
+        }
+
+        public GameObject SpawnFromPool(Pool pool)
+        {
+            var obj = pool.Spawn();
+            if (obj != null)
+            {
+                poolObjectMap[obj.GetInstanceID()] = pool;
+            }
+
+            return obj;
         }
 
         public GameObject Spawn(string poolName)
@@ -113,15 +125,24 @@ namespace Ouroboros.Common.Pooling
                 return null;
             }
 
-            return pool.Spawn();
+            return SpawnFromPool(pool);
         }
 
-        public void Release(GameObject gameObject)
+        public void ReleaseInstance(GameObject instance)
         {
-            var pool = GetPool(gameObject);
-            if (pool == null) return;
+            if (!poolObjectMap.TryGetValue(instance.GetInstanceID(), out var pool))
+            {
+                Debug.LogWarning(
+                    $"[PoolManager] No pool found for instance to release! instance={instance}", instance);
+            }
 
-            pool.Release(gameObject);
+            ReleaseFromPool(pool, instance);            
+        }
+
+        private void ReleaseFromPool(Pool pool, GameObject instance)
+        {
+            pool.Release(instance);
+            poolObjectMap.Remove(instance.GetInstanceID());
         }
 
         public void Release(GameObject gameObject, GameObject prefab)
@@ -129,7 +150,15 @@ namespace Ouroboros.Common.Pooling
             var pool = GetPool(prefab);
             if (pool == null) return;
 
-            pool.Release(gameObject);
+            ReleaseFromPool(pool, gameObject);            
+        }
+
+        public void Release(GameObject gameObject, int poolId)
+        {
+            var pool = GetPool(poolId);
+            if (pool == null) return;
+
+            ReleaseFromPool(pool, gameObject);            
         }
 
         public void Release(GameObject gameObject, string poolName)
@@ -137,7 +166,7 @@ namespace Ouroboros.Common.Pooling
             var pool = GetPool(poolName);
             if (pool == null) return;
 
-            pool.Release(gameObject);
+            ReleaseFromPool(pool, gameObject);            
         }
 
         public void Clear()

@@ -31,6 +31,12 @@ namespace Ouroboros.Common.Utils
                 Random.Range(minValue, maxValue));
         }
 
+        public static Vector3 Vector3Uniform(float minValue, float maxValue)
+        {
+            var value = Random.Range(minValue, maxValue);
+            return new Vector3(value, value, value);
+        }
+
         public static Vector3 Vector3(Vector3 minValue, Vector3 maxValue)
         {
             return new Vector3(
