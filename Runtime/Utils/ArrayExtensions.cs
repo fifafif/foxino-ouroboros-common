@@ -48,6 +48,16 @@ namespace Ouroboros.Common.Utils
             return list[Random.Range(0, list.Count)];
         }
 
+        public static T RandomElementOrDefault<T>(this IList<T> list, T defaultValue)
+        {
+            if (list.Count <= 0)
+            {
+                return defaultValue;
+            }
+
+            return list[Random.Range(0, list.Count)];
+        }
+
         public static bool RemoveBackward<T>(this IList<T> list, T element)
         {
             for (int i = list.Count - 1; i >= 0; --i)

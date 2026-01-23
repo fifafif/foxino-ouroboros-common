@@ -20,27 +20,34 @@ namespace Ouroboros.Common.Audio
         {
         }
 
-        public PlayAudioPayload(string id, AudioSource source, float delay) : this(id, source, null, false, 1f, 0f, delay)
+        public PlayAudioPayload(string id, AudioSource source, float delay) 
+            : this(id, source, null, false, 1f, 0f, delay)
         {
-
         }
 
-        public PlayAudioPayload(string id, AudioMixerGroup mixerGroup) : this(id, null, mixerGroup, false, 1f, 0f, 0f)
+        public PlayAudioPayload(string id, AudioMixerGroup mixerGroup) 
+            : this(id, null, mixerGroup, false, 1f, 0f, 0f)
         {
-
         }
 
-        public PlayAudioPayload(string id, AudioSource audioSource, AudioMixerGroup mixerGroup) : this(id, audioSource, mixerGroup, false, 1f, 0f, 0f)
+        public PlayAudioPayload(string id, AudioSource audioSource, AudioMixerGroup mixerGroup) 
+            : this(id, audioSource, mixerGroup, false, 1f, 0f, 0f)
         {
-
         }
 
-        public PlayAudioPayload(string id, AudioSource audioSource, AudioMixerGroup mixerGroup, float delay) : this(id, audioSource, mixerGroup, false, 1f, 0f, delay)
+        public PlayAudioPayload(string id, AudioSource audioSource, AudioMixerGroup mixerGroup, float delay) 
+            : this(id, audioSource, mixerGroup, false, 1f, 0f, delay)
         {
-
         }
 
-        public PlayAudioPayload(string id, AudioSource source, AudioMixerGroup mixerGroup, bool loop, float volume, float fadeInTime, float delay)
+        public PlayAudioPayload(
+            string id, 
+            AudioSource source, 
+            AudioMixerGroup mixerGroup, 
+            bool loop, 
+            float volume, 
+            float fadeInTime, 
+            float delay)
         {
             this.id = id;
             this.clip = null;
@@ -54,7 +61,14 @@ namespace Ouroboros.Common.Audio
             this.mixerGroup = mixerGroup;
         }
 
-        public PlayAudioPayload(AudioClip clip, AudioSource source, AudioMixerGroup mixerGroup, bool loop, float volume, float fadeInTime, float delay)
+        public PlayAudioPayload(
+            AudioClip clip, 
+            AudioSource source,
+            AudioMixerGroup mixerGroup, 
+            bool loop, 
+            float volume, 
+            float fadeInTime, 
+            float delay)
         {
             id = null;
             this.clip = clip;
