@@ -42,6 +42,11 @@ namespace Ouroboros.Common.Audio.UI
             AudioManager.RegisterOnMusicEnabled(OnMusicEnabled);
         }
 
+        private void OnEnable()
+        {
+            UpdateButtonVisuals();
+        }
+
         private void OnMusicEnabled(bool isEnabled)
         {
             UpdateButtonVisuals();
