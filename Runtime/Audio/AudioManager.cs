@@ -14,13 +14,16 @@ namespace Ouroboros.Common.Audio
         private const int SourceCount = 20;
         private const string MusicVolumeKey = "Audio_MusicVolume";
         private const string SFXVolumeKey = "Audio_SFXVolume";
+        private const string VoiceVolumeKey = "Audio_VoiceVolume";
         private const string MusicEnabledKey = "Audio_MusicEnabled";
+        private const string VoiceEnabledKey = "Audio_VoiceEnabled";
         private const string SFXEnabledKey = "Audio_SFXEnabled";
 
         public static AudioManager instance { get; private set; }
 
         public bool IsAudioEnabled { get; private set; }
         public bool IsMusicEnabled { get; private set; }
+        public bool IsVoiceEnabled { get; private set; }
         public bool IsSFXEnabled { get; private set; }
         public Action<PlayingAudio> OnMusicPlay { get; set; }
         public AudioDatabase[] Databases => databases;
@@ -52,6 +55,7 @@ namespace Ouroboros.Common.Audio
 
         private float musicVolumeMultiplier = 1f;
         private float sfxVolumeMultiplier = 1f;
+        private float voiceVolumeMultiplier = 1f;
 
         private int currentSoundSource;
         private AudioSource[] soundSources;
@@ -137,12 +141,15 @@ namespace Ouroboros.Common.Audio
         {
             musicVolumeMultiplier = PlayerPrefs.GetFloat(MusicVolumeKey, 1f);
             sfxVolumeMultiplier = PlayerPrefs.GetFloat(SFXVolumeKey, 1f);
+            voiceVolumeMultiplier = PlayerPrefs.GetFloat(VoiceVolumeKey, 1f);
 
             IsMusicEnabled = PlayerPrefs.GetInt(MusicEnabledKey, isMusicEnabledByDefault ? 1 : 0) == 1;
             IsSFXEnabled = PlayerPrefs.GetInt(SFXEnabledKey, 1) == 1;
+            IsVoiceEnabled = PlayerPrefs.GetInt(VoiceEnabledKey, 1) == 1;
 
             CalculateMusicVolume();
             CalculateSFXVolume();
+            CalculateVoiceVolume();
 
             Logs.Debug<AudioManager>($"Loaded AudioSettings: MusicEnabled={IsMusicEnabled}, MusicMultiplier={musicVolumeMultiplier}, MusicVolume={MusicVolume}, SFXEnabled={IsSFXEnabled}, SFXMultiplier={sfxVolumeMultiplier}, SfxVolume={SfxVolume}");
         }
@@ -163,6 +170,11 @@ namespace Ouroboros.Common.Audio
         private void SetSFXMixerVolume(float volume)
         {
             mixer.SetFloat("sfx_volume", CalculateVolume(volume));
+        }
+
+        private void SetVoiceMixerVolume(float volume)
+        {
+            mixer.SetFloat("voice_volume", CalculateVolume(volume));
         }
 
         private void OnDestroy()
@@ -246,6 +258,11 @@ namespace Ouroboros.Common.Audio
             instance.ToggleMusicEnabledInternal();
         }
 
+        public static void ToggleVoiceEnabled()
+        {
+            instance.ToggleVoiceEnabledInternal();
+        }
+
         public static void ToggleSFXEnabled()
         {
             instance.ToggleSFXEnabledInternal();
@@ -264,6 +281,11 @@ namespace Ouroboros.Common.Audio
         private void ToggleMusicEnabledInternal()
         {
             SetMusicEnabledInternal(!IsMusicEnabled);
+        }
+
+        private void ToggleVoiceEnabledInternal()
+        {
+            SetVoiceEnabledInternal(!IsVoiceEnabled);
         }
 
         private void ToggleSFXEnabledInternal()
@@ -285,9 +307,16 @@ namespace Ouroboros.Common.Audio
             PlayerPrefs.Save();
         }
 
-        private void CalculateMusicVolume()
+        private void SetVoiceEnabledInternal(bool enabled)
         {
-            MusicVolume = baseMusicVolume * musicVolumeMultiplier * (IsMusicEnabled ? 1f : 0f);
+            Logs.Debug<AudioManager>($"SetVoiceEnabledInternal enabled={enabled}");
+            IsVoiceEnabled = enabled;
+
+            CalculateVoiceVolume();
+            SetVoiceMixerVolume(VoiceVolume);
+
+            PlayerPrefs.SetInt(VoiceEnabledKey, IsVoiceEnabled ? 1 : 0);
+            PlayerPrefs.Save();
         }
 
         private void SetSFXEnabledInternal(bool enabled)
@@ -302,9 +331,19 @@ namespace Ouroboros.Common.Audio
             PlayerPrefs.Save();
         }
 
+        private void CalculateMusicVolume()
+        {
+            MusicVolume = baseMusicVolume * musicVolumeMultiplier * (IsMusicEnabled ? 1f : 0f);
+        }
+
         private void CalculateSFXVolume()
         {
             SfxVolume = baseSfxVolume * sfxVolumeMultiplier * (IsSFXEnabled ? 1f : 0f);
+        }
+
+        private void CalculateVoiceVolume()
+        {
+            VoiceVolume = baseVoiceVolume * voiceVolumeMultiplier * (IsVoiceEnabled ? 1f : 0f);
         }
 
         private void SetSFXVolumeInternal(float volume)
