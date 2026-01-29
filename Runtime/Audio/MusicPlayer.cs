@@ -1,11 +1,16 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using Ouroboros.Common.Logging;
 using Ouroboros.Common.Services;
 using Ouroboros.Common.Utils;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 using Random = UnityEngine.Random;
+
+#if ADDRESSABLES_ENABLED
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+#endif
 
 namespace Ouroboros.Common.Audio
 {
@@ -35,6 +40,11 @@ namespace Ouroboros.Common.Audio
         private int currentIndex;
         private int audioId;
         private bool isPaused;
+
+#if ADDRESSABLES_ENABLED
+        private Dictionary<MusicClipData, AsyncOperationHandle<AudioClip>> addressableHandles =
+            new Dictionary<MusicClipData, AsyncOperationHandle<AudioClip>>();
+#endif
 
         private void Awake()
         {
@@ -69,6 +79,16 @@ namespace Ouroboros.Common.Audio
             {
                 AudioManager.UnregisterMusicPlayer(this);
             }
+
+#if ADDRESSABLES_ENABLED
+            // Release all Addressables handles
+            foreach (var handle in addressableHandles.Values)
+            {
+                if (handle.IsValid())
+                    Addressables.Release(handle);
+            }
+            addressableHandles.Clear();
+#endif
         }
 
         private void Shuffle()
@@ -109,52 +129,148 @@ namespace Ouroboros.Common.Audio
 
         public MusicClipData Play(MusicClipData clip)
         {
-            Logs.Debug<AudioManager>($"MusicPlayer Play clip={clip}, name={name}");
+            Logs.Debug<MusicPlayer>($"MusicPlayer Play clip={clip.Name}, name={name}");
 
             TrySetIndex(clip);
-
             IsPlaying = true;
             isPaused = false;
 
-            // Check if we need to load from StreamingAssets
-            if (clip.AudioClip == null && !string.IsNullOrEmpty(clip.StreamingAssetsPath))
-            {
-                StartCoroutine(PlayFromStreamingAssets(clip));
-            }
-            else
-            {
-                audioId = AudioManager.instance.PlayMusic(clip.AudioClip, audioSource, OnMusicFinish, fadeInDuration);
-                PlayingClip = clip;
-                OnMusicPlay?.Invoke(clip);
-            }
+            // Launch async without blocking
+            PlayAsync(clip).Forget();
 
             return clip;
         }
 
-        private IEnumerator PlayFromStreamingAssets(MusicClipData clip)
+        private async UniTask<AudioClip> LoadClipAsync(MusicClipData clip, IProgress<float> progress = null)
         {
-            Logs.Debug<AudioManager>($"MusicPlayer loading from StreamingAssets: {clip.StreamingAssetsPath}");
+            // Priority 1: Use cached clip if available
+            if (clip.AudioClip != null)
+                return clip.AudioClip;
 
-            AudioType audioType = AudioStreamingLoader.GetAudioTypeFromPath(clip.StreamingAssetsPath);
-            AudioClip loadedClip = null;
-
-            yield return AudioStreamingLoader.LoadAudioClip(
-                clip.StreamingAssetsPath,
-                (clip) => loadedClip = clip,
-                audioType);
-
-            if (loadedClip != null)
+#if ADDRESSABLES_ENABLED
+            // Priority 2: Try Addressables
+            if (clip.AddressableReference != null && clip.AddressableReference.RuntimeKeyIsValid())
             {
-                // Cache the loaded clip for future use
-                clip.AudioClip = loadedClip;
-
-                audioId = AudioManager.instance.PlayMusic(loadedClip, audioSource, OnMusicFinish, fadeInDuration);
-                PlayingClip = clip;
-                OnMusicPlay?.Invoke(clip);
+                var result = await LoadFromAddressables(clip, progress);
+                if (result != null) return result;
             }
-            else
+#endif
+
+            // Priority 3: Try StreamingAssets
+            if (!string.IsNullOrEmpty(clip.StreamingAssetsPath))
             {
-                Logs.Error<AudioManager>($"Failed to load audio from StreamingAssets: {clip.StreamingAssetsPath}");
+                var result = await LoadFromStreamingAssets(clip, progress);
+                if (result != null) return result;
+            }
+
+            // Priority 4: Nothing available
+            Logs.Warning<MusicPlayer>($"No loading source for music: {clip.Name}");
+            return null;
+        }
+
+#if ADDRESSABLES_ENABLED
+        private async UniTask<AudioClip> LoadFromAddressables(MusicClipData clip, IProgress<float> progress)
+        {
+            try
+            {
+                // First, check if the location exists (important for WebGL)
+                var locateHandle = Addressables.LoadResourceLocationsAsync(clip.AddressableReference.RuntimeKey);
+                await locateHandle.ToUniTask();
+
+                if (locateHandle.Status != AsyncOperationStatus.Succeeded || locateHandle.Result.Count == 0)
+                {
+                    Logs.Warning<MusicPlayer>($"Addressables location not found for: {clip.Name}");
+                    Addressables.Release(locateHandle);
+                    return null;
+                }
+
+                Addressables.Release(locateHandle);
+
+                // Now load the actual asset
+                var handle = clip.AddressableReference.LoadAssetAsync<AudioClip>();
+
+                // Report progress
+                while (!handle.IsDone)
+                {
+                    progress?.Report(handle.PercentComplete);
+                    await UniTask.Yield();
+                }
+                progress?.Report(1f);
+
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    var loadedClip = handle.Result;
+                    clip.AudioClip = loadedClip; // Cache it
+
+                    // Store handle for cleanup
+                    if (!addressableHandles.ContainsKey(clip))
+                        addressableHandles[clip] = handle;
+
+                    Logs.Debug<MusicPlayer>($"Loaded from Addressables: {clip.Name}");
+                    return loadedClip;
+                }
+                else
+                {
+                    Logs.Error<MusicPlayer>($"Addressables load failed: {clip.Name}, Status: {handle.Status}");
+                    Addressables.Release(handle);
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.Error<MusicPlayer>($"Addressables exception: {clip.Name}, {ex.Message}");
+                return null;
+            }
+        }
+#endif
+
+        private async UniTask<AudioClip> LoadFromStreamingAssets(MusicClipData clip, IProgress<float> progress)
+        {
+            Logs.Debug<MusicPlayer>($"Loading from StreamingAssets: {clip.StreamingAssetsPath}");
+
+            var audioType = AudioStreamingLoader.GetAudioTypeFromPath(clip.StreamingAssetsPath);
+            var tcs = new UniTaskCompletionSource<AudioClip>();
+
+            // Wrap existing coroutine
+            StartCoroutine(AudioStreamingLoader.LoadAudioClip(
+                clip.StreamingAssetsPath,
+                (loadedClip) =>
+                {
+                    if (loadedClip != null)
+                    {
+                        clip.AudioClip = loadedClip; // Cache it
+                        progress?.Report(1f);
+                    }
+                    tcs.TrySetResult(loadedClip);
+                },
+                audioType
+            ));
+
+            return await tcs.Task;
+        }
+
+        private async UniTaskVoid PlayAsync(MusicClipData clip)
+        {
+            try
+            {
+                var audioClip = await LoadClipAsync(clip, null);
+
+                if (audioClip != null)
+                {
+                    audioId = AudioManager.instance.PlayMusic(audioClip, audioSource, OnMusicFinish, fadeInDuration);
+                    PlayingClip = clip;
+                    OnMusicPlay?.Invoke(clip);
+                }
+                else
+                {
+                    Logs.Error<MusicPlayer>($"Failed to load: {clip.Name}");
+                    IsPlaying = false;
+                    OnMusicFinish(); // Trigger next track
+                }
+            }
+            catch (Exception ex)
+            {
+                Logs.Error<MusicPlayer>($"PlayAsync exception: {ex.Message}");
                 IsPlaying = false;
                 OnMusicFinish();
             }
