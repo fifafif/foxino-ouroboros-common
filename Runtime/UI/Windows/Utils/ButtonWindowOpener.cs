@@ -35,8 +35,21 @@ namespace Ouroboros.Common.UI.Windows.Utils
 
             var config = new ParamWindowConfig(parameters);
 
-            var uiSystem = ServiceLocator.Get<UISystem>();
-            uiSystem.WindowManager.OpenWindow(windowId, config);
+            if (ServiceLocator.TryGet<UISystem>(out var uiSystem))
+            {
+                uiSystem.WindowManager.OpenWindow(windowId, config);
+            }
+            else
+            {
+                var windowsManager = GetComponentInParent<WindowsManager>();
+                if (windowsManager == null)                
+                {
+                    Debug.LogError($"[ButtonWindowOpener] No WindowsManager found!");
+                    return;
+                }
+
+                windowsManager.OpenWindow(windowId, config);
+            }
         }
     }
 }
