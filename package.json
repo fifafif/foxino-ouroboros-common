@@ -6,7 +6,6 @@
   "unity": "2021.3",
   "unityRelease": "0f1",
   "dependencies": {
-    "com.unity.addressables": "1.19.19",
     "com.cysharp.unitask": "2.3.1"
   },
   "keywords": [
