@@ -8,12 +8,6 @@ namespace Ouroboros.Common.Audio
     [CustomEditor(typeof(AudioManager))]
     public class AudioManagerEditor : Editor
     {
-        // Base volume sliders (inspector values)
-        private Slider baseMasterVolumeSlider;
-        private Slider baseMusicVolumeSlider;
-        private Slider baseSfxVolumeSlider;
-        private Slider baseVoiceVolumeSlider;
-
         // Runtime volume sliders
         private Slider runtimeMasterVolumeSlider;
         private Slider runtimeMusicVolumeSlider;
@@ -28,40 +22,7 @@ namespace Ouroboros.Common.Audio
         {
             var root = new VisualElement();
 
-            // Add default inspector for other fields (databases, mixer, etc.)
             InspectorElement.FillDefaultInspector(root, serializedObject, this);
-
-            // ========== BASE VOLUME SECTION ==========
-            var baseVolumeSection = CreateSection("Base Volumes (Inspector Defaults)", new Color(0.3f, 0.5f, 0.7f, 0.3f));
-
-            var baseHelpBox = new HelpBox("These are the default volumes set in the inspector. They are preserved and used as base values for calculations.", HelpBoxMessageType.Info);
-            baseVolumeSection.Add(baseHelpBox);
-
-            // Base Master Volume
-            baseMasterVolumeSlider = CreateVolumeSlider("Master Volume",
-                serializedObject.FindProperty("MasterVolume"),
-                null);
-            baseVolumeSection.Add(baseMasterVolumeSlider);
-
-            // Base Music Volume
-            baseMusicVolumeSlider = CreateVolumeSlider("Music Volume",
-                serializedObject.FindProperty("MusicVolume"),
-                null);
-            baseVolumeSection.Add(baseMusicVolumeSlider);
-
-            // Base SFX Volume
-            baseSfxVolumeSlider = CreateVolumeSlider("SFX Volume",
-                serializedObject.FindProperty("SfxVolume"),
-                null);
-            baseVolumeSection.Add(baseSfxVolumeSlider);
-
-            // Base Voice Volume
-            baseVoiceVolumeSlider = CreateVolumeSlider("Voice Volume",
-                serializedObject.FindProperty("VoiceVolume"),
-                null);
-            baseVolumeSection.Add(baseVoiceVolumeSlider);
-
-            root.Add(baseVolumeSection);
 
             var clearButton = new Button(() =>
             {
@@ -120,7 +81,7 @@ namespace Ouroboros.Common.Audio
 
                 // Runtime SFX Volume Multiplier
                 runtimeSfxVolumeSlider = CreateRuntimeSlider("SFX Volume Multiplier",
-                    () => AudioManager.instance != null ? AudioManager.instance.SfxVolume / Mathf.Max(0.0001f, serializedObject.FindProperty("SfxVolume").floatValue) : 1f,
+                    () => AudioManager.instance != null ? AudioManager.instance.SFXVolume / Mathf.Max(0.0001f, serializedObject.FindProperty("SfxVolume").floatValue) : 1f,
                     (value) => AudioManager.SetSFXVolume(value));
                 runtimeVolumeSection.Add(runtimeSfxVolumeSlider);
 
@@ -196,7 +157,7 @@ namespace Ouroboros.Common.Audio
 
             if (runtimeSfxVolumeSlider != null && baseSfxVolume > 0.0001f)
             {
-                float multiplier = AudioManager.instance.SfxVolume / baseSfxVolume;
+                float multiplier = AudioManager.instance.SFXVolume / baseSfxVolume;
                 if (AudioManager.instance.IsSFXEnabled && multiplier > 0)
                 {
                     runtimeSfxVolumeSlider.SetValueWithoutNotify(multiplier);

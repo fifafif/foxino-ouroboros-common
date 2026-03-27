@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Audio;
+using UnityEngine.Serialization;
 
 namespace Ouroboros.Common.Audio
 {
@@ -29,6 +30,10 @@ namespace Ouroboros.Common.Audio
         public AudioDatabase[] Databases => databases;
         public RegisteredCallback OnSettingsLoaded { get; private set; } = new RegisteredCallback();
         public Action<bool> OnMusicEnabled { get; set; }
+        public float MasterVolume => masterVolume;
+        public float MusicVolume => musicVolume;
+        public float SFXVolume => sfxVolume;
+        public float VoiceVolume => voiceVolume;
 
         [SerializeField] private AudioDatabase[] databases;
         [SerializeField] private AudioMixer mixer;
@@ -36,15 +41,23 @@ namespace Ouroboros.Common.Audio
         [SerializeField] public AudioMixerGroup sfxMixerGroup;
         [SerializeField] public AudioMixerGroup musicMixerGroup;
         [SerializeField] public AudioMixerGroup voiceMixerGroup;
+        [SerializeField] public string masterVolumeParameterName = "volume_master";
+        [SerializeField] public string musicVolumeParameterName = "volume_music";
+        [SerializeField] public string sfxVolumeParameterName = "volume_sfx";
+        [SerializeField] public string voiceVolumeParameterName = "volume_voice";
 
         [Range(0f, 1f)]
-        public float MasterVolume = 1f;
+        [FormerlySerializedAs("MasterVolume")]
+        [SerializeField] private float masterVolume = 1f;
         [Range(0f, 1f)]
-        public float MusicVolume = 1f;
+        [FormerlySerializedAs("MusicVolume")]
+        [SerializeField] private float musicVolume = 1f;
         [Range(0f, 1f)]
-        public float SfxVolume = 1f;
+        [FormerlySerializedAs("SfxVolume")]
+        [SerializeField] private float sfxVolume = 1f;
         [Range(0f, 1f)]
-        public float VoiceVolume = 1f;
+        [FormerlySerializedAs("VoiceVolume")]
+        [SerializeField] private float voiceVolume = 1f;
 
         [SerializeField] public bool isMusicEnabledByDefault = true;
 
@@ -60,15 +73,13 @@ namespace Ouroboros.Common.Audio
         private int currentSoundSource;
         private AudioSource[] soundSources;
         private AudioSource musicSource;
-        private Dictionary<string, AudioClipBase> clipDatabaseMap = new Dictionary<string, AudioClipBase>();
+        private readonly Dictionary<string, AudioClipBase> clipDatabaseMap = new Dictionary<string, AudioClipBase>();
+        private readonly List<PlayingAudio> playingAudios = new List<PlayingAudio>();
+        private readonly List<int> audiosToDelete = new List<int>();
+        private readonly Dictionary<string, MusicPlayer> musicPlayers = new Dictionary<string, MusicPlayer>();
         private Action onMusicFinish;
-        private List<PlayingAudio> playingAudios = new List<PlayingAudio>();
-        private List<int> audiosToDelete = new List<int>();
         private int audioIds;
-        private float lastPlayedSoundTime;
-        private AudioClip lastPlayedSoundClip;
         private bool hasInit;
-        private Dictionary<string, MusicPlayer> musicPlayers = new Dictionary<string, MusicPlayer>();
         private static string StreamingAssetsPath;
 
         private void Awake()
@@ -129,10 +140,10 @@ namespace Ouroboros.Common.Audio
 
         private void CaptureBaseVolumes()
         {
-            baseMasterVolume = MasterVolume;
-            baseMusicVolume = MusicVolume;
-            baseSfxVolume = SfxVolume;
-            baseVoiceVolume = VoiceVolume;
+            baseMasterVolume = masterVolume;
+            baseMusicVolume = musicVolume;
+            baseSfxVolume = sfxVolume;
+            baseVoiceVolume = voiceVolume;
 
             Logs.Debug<AudioManager>($"Captured base volumes: Master={baseMasterVolume}, Music={baseMusicVolume}, SFX={baseSfxVolume}, Voice={baseVoiceVolume}");
         }
@@ -151,15 +162,15 @@ namespace Ouroboros.Common.Audio
             CalculateSFXVolume();
             CalculateVoiceVolume();
 
-            Logs.Debug<AudioManager>($"Loaded AudioSettings: MusicEnabled={IsMusicEnabled}, MusicMultiplier={musicVolumeMultiplier}, MusicVolume={MusicVolume}, SFXEnabled={IsSFXEnabled}, SFXMultiplier={sfxVolumeMultiplier}, SfxVolume={SfxVolume}");
+            Logs.Debug<AudioManager>($"Loaded AudioSettings: MusicEnabled={IsMusicEnabled}, MusicMultiplier={musicVolumeMultiplier}, MusicVolume={musicVolume}, SFXEnabled={IsSFXEnabled}, SFXMultiplier={sfxVolumeMultiplier}, SfxVolume={sfxVolume}");
         }
 
         private void ApplyDefaultVolumes()
         {
-            SetMasterVolume(MasterVolume);
-            SetMusicMixerVolume(MusicVolume);
-            SetSFXMixerVolume(SfxVolume);
-            mixer.SetFloat("voice_volume", CalculateVolume(VoiceVolume));
+            SetMasterVolume(masterVolume);
+            SetMusicMixerVolume(musicVolume);
+            SetSFXMixerVolume(sfxVolume);
+            mixer.SetFloat("voice_volume", CalculateVolume(voiceVolume));
         }
 
         private void SetMusicMixerVolume(float volume)
@@ -230,7 +241,7 @@ namespace Ouroboros.Common.Audio
             float volume = isEnabled ? 1f : 0;
 
             SetMasterVolume(CalculateVolume(volume));
-            MasterVolume = volume;
+            masterVolume = volume;
         }
 
         private void SetMusicPitch(float timeScale)
@@ -299,7 +310,7 @@ namespace Ouroboros.Common.Audio
             IsMusicEnabled = enabled;
 
             CalculateMusicVolume();
-            SetMusicMixerVolume(MusicVolume);
+            SetMusicMixerVolume(musicVolume);
 
             OnMusicEnabled?.Invoke(enabled);
 
@@ -313,7 +324,7 @@ namespace Ouroboros.Common.Audio
             IsVoiceEnabled = enabled;
 
             CalculateVoiceVolume();
-            SetVoiceMixerVolume(VoiceVolume);
+            SetVoiceMixerVolume(voiceVolume);
 
             PlayerPrefs.SetInt(VoiceEnabledKey, IsVoiceEnabled ? 1 : 0);
             PlayerPrefs.Save();
@@ -325,7 +336,7 @@ namespace Ouroboros.Common.Audio
             IsSFXEnabled = enabled;
 
             CalculateSFXVolume();
-            SetSFXMixerVolume(SfxVolume);
+            SetSFXMixerVolume(sfxVolume);
 
             PlayerPrefs.SetInt(SFXEnabledKey, IsSFXEnabled ? 1 : 0);
             PlayerPrefs.Save();
@@ -333,17 +344,17 @@ namespace Ouroboros.Common.Audio
 
         private void CalculateMusicVolume()
         {
-            MusicVolume = baseMusicVolume * musicVolumeMultiplier * (IsMusicEnabled ? 1f : 0f);
+            musicVolume = baseMusicVolume * musicVolumeMultiplier * (IsMusicEnabled ? 1f : 0f);
         }
 
         private void CalculateSFXVolume()
         {
-            SfxVolume = baseSfxVolume * sfxVolumeMultiplier * (IsSFXEnabled ? 1f : 0f);
+            sfxVolume = baseSfxVolume * sfxVolumeMultiplier * (IsSFXEnabled ? 1f : 0f);
         }
 
         private void CalculateVoiceVolume()
         {
-            VoiceVolume = baseVoiceVolume * voiceVolumeMultiplier * (IsVoiceEnabled ? 1f : 0f);
+            voiceVolume = baseVoiceVolume * voiceVolumeMultiplier * (IsVoiceEnabled ? 1f : 0f);
         }
 
         private void SetSFXVolumeInternal(float volume)
@@ -353,7 +364,7 @@ namespace Ouroboros.Common.Audio
             sfxVolumeMultiplier = Mathf.Clamp01(volume);
 
             CalculateSFXVolume();
-            SetSFXMixerVolume(SfxVolume);
+            SetSFXMixerVolume(sfxVolume);
 
             PlayerPrefs.SetFloat(SFXVolumeKey, sfxVolumeMultiplier);
             PlayerPrefs.Save();
@@ -366,7 +377,7 @@ namespace Ouroboros.Common.Audio
             musicVolumeMultiplier = Mathf.Clamp01(volume);
 
             CalculateMusicVolume();
-            SetMusicMixerVolume(CalculateVolume(MusicVolume));
+            SetMusicMixerVolume(CalculateVolume(musicVolume));
 
             PlayerPrefs.SetFloat(MusicVolumeKey, musicVolumeMultiplier);
             PlayerPrefs.Save();
@@ -375,7 +386,7 @@ namespace Ouroboros.Common.Audio
         private void SetVoiceVolumeInternal(float volume)
         {
             Logs.Debug<AudioManager>($"SetVoiceVolumeInternal volume={volume}");
-            VoiceVolume = Mathf.Clamp01(volume);
+            voiceVolume = Mathf.Clamp01(volume);
             mixer.SetFloat("voice_volume", CalculateVolume(volume));
         }
 
@@ -530,15 +541,6 @@ namespace Ouroboros.Common.Audio
                 return -1;
             }
 
-            // if (lastPlayedSoundClip == payload.clip
-            //     && (Time.time - lastPlayedSoundTime) < 0.05)
-            // {
-            //     return -1;
-            // }
-
-            lastPlayedSoundTime = Time.time;
-            lastPlayedSoundClip = payload.clip;
-
             if (payload.fadeInTime > 0f)
             {
                 audio.FadeIn(payload.fadeInTime);
@@ -546,7 +548,7 @@ namespace Ouroboros.Common.Audio
 
             audio.IsLooping = payload.loop;
             audio.AudioSource.loop = payload.loop;
-            audio.AudioSource.volume = payload.volume * SfxVolume;
+            audio.AudioSource.volume = payload.volume * sfxVolume;
             audio.Play(payload.delay);
 
             playingAudios.Add(audio);
