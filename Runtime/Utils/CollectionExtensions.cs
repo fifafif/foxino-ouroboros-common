@@ -78,6 +78,11 @@ namespace Ouroboros.Common.Utils
 
         public static string Print<T>(this List<T> list)
         {
+            if (list == null)
+            {
+                return null;
+            }
+            
             var sb = new StringBuilder();
 
             foreach (var kvp in list)
