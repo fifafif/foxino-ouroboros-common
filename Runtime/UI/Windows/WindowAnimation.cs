@@ -1,4 +1,4 @@
-using System;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Ouroboros.Common.UI.Windows
@@ -8,27 +8,39 @@ namespace Ouroboros.Common.UI.Windows
     public class WindowAnimation : MonoBehaviour
     {
         [SerializeField] private AnimationClip openClip;
-        [SerializeField] private AnimationClip initializedClip;
+        [SerializeField] private AnimationClip closeClip;
 
-        private Animation animation;
-
+        private new Animation animation;
+        
         private void Awake()
         {
             animation = GetComponent<Animation>();
 
             var window = GetComponent<Window>();
             window.OnOpenAction += OnWindowOpen;
-            window.OnInitializedAction += OnWindowInitialized;
         }
 
-        private void OnWindowInitialized()
+        private void OnWindowClose()
         {
-            PlayAnim(initializedClip);
+            PlayAnim(closeClip);
         }
 
         private void OnWindowOpen()
         {
             PlayAnim(openClip);
+        }
+
+        public async UniTask CloseAsync()
+        {
+            await PlayAnimAsync(closeClip);
+        }
+
+        private async UniTask PlayAnimAsync(AnimationClip closeClip)
+        {
+            if (closeClip == null) return;
+            
+            PlayAnim(closeClip);
+            await UniTask.WaitUntil(() => !animation.isPlaying);
         }
 
         private void PlayAnim(AnimationClip clip)

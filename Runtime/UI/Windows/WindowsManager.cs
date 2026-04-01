@@ -25,7 +25,7 @@ namespace Ouroboros.Common.UI.Windows
             {
                 if (!window.IsOnCorrectPlatform(platformType)) continue;
 
-                windows.Add(window);
+                AddWindowInternal(window);
                 window.gameObject.SetActive(false);
             }
         }
@@ -243,7 +243,13 @@ namespace Ouroboros.Common.UI.Windows
         public void RegisterWindow(Window window)
         {
             if (!window.IsOnCorrectPlatform(UIPlatformUtils.GetUIPlatformType())) return;
-            
+
+            AddWindowInternal(window);
+        }
+
+        private void AddWindowInternal(Window window)
+        {
+            window.InitInternal();
             windows.Add(window);
         }
 

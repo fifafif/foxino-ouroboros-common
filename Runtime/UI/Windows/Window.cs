@@ -1,4 +1,5 @@
 ﻿using System;
+using Cysharp.Threading.Tasks;
 using Ouroboros.Common.UI.Platform;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,12 +20,19 @@ namespace Ouroboros.Common.UI.Windows
         [SerializeField] private bool isPlatformRestricted;
         [SerializeField] private UIPlatformType platformType;
 
+        private WindowAnimation windowAnimation;
+
         public bool IsOnCorrectPlatform(UIPlatformType platformType)
         {
             if (!isPlatformRestricted) return true;
 
             return this.platformType == platformType
                 || this.platformType.IsMobileOrTabled() == platformType.IsMobileOrTabled();
+        }
+
+        public void InitInternal()
+        {
+            TryGetComponent(out windowAnimation);
         }
 
         public void Init(WindowsManager windowsManager, WindowConfig windowConfig)
@@ -43,7 +51,26 @@ namespace Ouroboros.Common.UI.Windows
 
         public void Close()
         {
-            if (IsClosed) return;
+            if (!TryCloseInternal()) return;
+
+            FinalizeClose();
+        }
+
+        public async UniTask CloseAsync()
+        {
+            if (!TryCloseInternal()) return;
+
+            if (windowAnimation != null)
+            {
+                await windowAnimation.CloseAsync();
+            }
+
+            FinalizeClose();
+        }
+
+        private bool TryCloseInternal()
+        {
+            if (IsClosed) return false;
 
             IsClosed = true;
             OnClose();
@@ -51,6 +78,11 @@ namespace Ouroboros.Common.UI.Windows
             OnCloseAction?.Invoke();
             OnCloseAction = null;
 
+            return true;
+        }
+
+        private void FinalizeClose()
+        {
             gameObject.SetActive(false);
             WindowsManager.CloseWindow(this);
         }
