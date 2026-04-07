@@ -11,8 +11,8 @@ namespace Ouroboros.Common.UI.Windows
 {
     public class WindowsManager : MonoBehaviour
     {
-        private List<Window> windows = new List<Window>();
-        private List<Window> openedWindows = new List<Window>();
+        private readonly List<Window> windows = new List<Window>();
+        private readonly List<Window> openedWindows = new List<Window>();
 
         public void Awake()
         {

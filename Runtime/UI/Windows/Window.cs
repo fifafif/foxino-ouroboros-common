@@ -38,13 +38,13 @@ namespace Ouroboros.Common.UI.Windows
         public void Init(WindowsManager windowsManager, WindowConfig windowConfig)
         {
             WindowsManager = windowsManager;
+            gameObject.SetActive(true);
             OnInit(windowConfig);
         }
 
         public void Open()
         {
             IsClosed = false;
-            gameObject.SetActive(true);
             OnOpen();
             OnOpenAction?.Invoke();
         }
