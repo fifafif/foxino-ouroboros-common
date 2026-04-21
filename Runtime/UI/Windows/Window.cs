@@ -74,9 +74,7 @@ namespace Ouroboros.Common.UI.Windows
 
             IsClosed = true;
             OnClose();
-
             OnCloseAction?.Invoke();
-            OnCloseAction = null;
 
             return true;
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace Ouroboros.Common.Audio
 {
@@ -14,6 +15,7 @@ namespace Ouroboros.Common.Audio
 
         [SerializeField] private AudioClip audioClip;
         [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioMixerGroup mixerGroup;
         [AudioClip]
         [SerializeField] private string audioId;
         [SerializeField] private TargetType target = TargetType.AudioManager;
@@ -44,6 +46,7 @@ namespace Ouroboros.Common.Audio
                 else if (!string.IsNullOrEmpty(audioId))
                 {
                     var payload = new PlayAudioPayload(audioId, audioSource, delay);
+                    payload.mixerGroup = mixerGroup;
                     payload.volume = volume;
                     payload.fadeInTime = fadeInTime;
                     payload.loop = isLooping;
@@ -78,6 +81,8 @@ namespace Ouroboros.Common.Audio
             }
             else
             {
+                Debug.Assert(audioSource != null, "[AudioData] Missing AudioSource!");
+
                 audioSource.Stop();
             }
         }

@@ -58,7 +58,7 @@ namespace Ouroboros.Common.Audio
 
                 // Runtime Music Volume Multiplier
                 runtimeMusicVolumeSlider = CreateRuntimeSlider("Music Volume Multiplier",
-                    () => AudioManager.instance != null ? AudioManager.instance.MusicVolume / Mathf.Max(0.0001f, serializedObject.FindProperty("MusicVolume").floatValue) : 1f,
+                    () => AudioManager.instance != null ? AudioManager.instance.MusicVolume / Mathf.Max(0.0001f, serializedObject.FindProperty("musicVolume").floatValue) : 1f,
                     (value) => AudioManager.SetMusicVolume(value));
                 runtimeVolumeSection.Add(runtimeMusicVolumeSlider);
 
@@ -81,7 +81,7 @@ namespace Ouroboros.Common.Audio
 
                 // Runtime SFX Volume Multiplier
                 runtimeSfxVolumeSlider = CreateRuntimeSlider("SFX Volume Multiplier",
-                    () => AudioManager.instance != null ? AudioManager.instance.SFXVolume / Mathf.Max(0.0001f, serializedObject.FindProperty("SfxVolume").floatValue) : 1f,
+                    () => AudioManager.instance != null ? AudioManager.instance.SFXVolume / Mathf.Max(0.0001f, serializedObject.FindProperty("sfxVolume").floatValue) : 1f,
                     (value) => AudioManager.SetSFXVolume(value));
                 runtimeVolumeSection.Add(runtimeSfxVolumeSlider);
 
@@ -143,8 +143,8 @@ namespace Ouroboros.Common.Audio
             }
 
             // Update runtime sliders with current multiplier values
-            var baseMusicVolume = serializedObject.FindProperty("MusicVolume").floatValue;
-            var baseSfxVolume = serializedObject.FindProperty("SfxVolume").floatValue;
+            var baseMusicVolume = serializedObject.FindProperty("musicVolume").floatValue;
+            var baseSfxVolume = serializedObject.FindProperty("sfxVolume").floatValue;
 
             if (runtimeMusicVolumeSlider != null && baseMusicVolume > 0.0001f)
             {
