@@ -1,11 +1,18 @@
 ﻿using Ouroboros.Common.Utils;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 namespace Ouroboros.Common.Audio
 {
     public static class AudioEditorUtils
     {
+        [MenuItem("Ouroboros/Audio/Clear Audio Settings")]
+        public static void ClearAudioSettings()
+        {
+            AudioManager.ClearAllSettings();
+        }
+
         public static AudioClip FindAudioClip(string audioId)
         {
             var databases = AssetFinder.FindAssetsByType<AudioDatabase>();
