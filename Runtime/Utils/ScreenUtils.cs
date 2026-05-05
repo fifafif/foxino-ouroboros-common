@@ -30,5 +30,18 @@ namespace Ouroboros.Common.Utils
                 return Screen.dpi;
             } 
         }
+
+        public static float AspectRatio
+        {
+            get
+            {
+                if (Screen.height == 0)
+                {
+                    return 1f;
+                }
+
+                return (float)Screen.width / Screen.height;
+            }
+        }
     }
 }
