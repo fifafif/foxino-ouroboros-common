@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
 
-//[ExecuteInEditMode]
 public class PositionNoiseRandomChildren : MonoBehaviour
 {
-    public float speed = 1f;
     public float frequency = 1f;
     public float strength = 1f;
     public Vector3 axes = Vector3.one;
@@ -34,11 +32,11 @@ public class PositionNoiseRandomChildren : MonoBehaviour
 
     void Update()
     {
-        time += Time.deltaTime * speed;
+        time += Time.deltaTime * frequency;
 
         for (int i = 0; i < children.Length; ++i)
         {
-            var s = salt[i] * time * frequency;
+            var s = salt[i] * time;
 
             var noise = new Vector3(
                 Mathf.PerlinNoise(s.x, s.y) * 2 - 1f,
