@@ -50,7 +50,8 @@ namespace Ouroboros.Common.Utils
 
         public static T RandomElementOrDefault<T>(this IList<T> list, T defaultValue)
         {
-            if (list.Count <= 0)
+            if (list == null
+                || list.Count <= 0)
             {
                 return defaultValue;
             }
