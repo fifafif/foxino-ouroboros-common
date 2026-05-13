@@ -237,5 +237,12 @@ namespace Ouroboros.Common.Utils.Transforms
             transform.SetParent(parent, false);
             transform.Reset();
         }
+
+        public static void SetParentAndResetRotationAndPosition(
+            this Transform transform, Transform parent)
+        {
+            transform.SetParent(parent, false);
+            transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+        }
     }
 }
