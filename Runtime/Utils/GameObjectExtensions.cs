@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Ouroboros.Common.Utils
 {
@@ -149,6 +151,23 @@ namespace Ouroboros.Common.Utils
             {
                 target.enabled = isEnabled;
             }
+        }
+
+        public static IList<T> GetComponentsInImmediateChildren<T>(
+            this GameObject gameObject, bool includeInactive = false) where T : Component
+        {
+            var list = new List<T>();
+            foreach (Transform child in gameObject.transform)
+            {
+                if ((includeInactive 
+                        || child.gameObject.activeSelf) 
+                    && child.TryGetComponent<T>(out var component))
+                {
+                    list.Add(component);
+                }
+            }
+
+            return list;
         }
     }
 }
