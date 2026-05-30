@@ -164,7 +164,7 @@ namespace Ouroboros.Common.Audio
             }
 
             // Priority 4: Nothing available
-            Logs.Warning<MusicPlayer>($"No loading source for music: {clip.Name}");
+            Logs.Error<MusicPlayer>($"No loading source for music: {clip.Name}");
             return null;
         }
 
@@ -179,7 +179,7 @@ namespace Ouroboros.Common.Audio
 
                 if (locateHandle.Status != AsyncOperationStatus.Succeeded || locateHandle.Result.Count == 0)
                 {
-                    Logs.Warning<MusicPlayer>($"Addressables location not found for: {clip.Name}");
+                    Logs.Error<MusicPlayer>($"Addressables location not found for: {clip.Name}");
                     Addressables.Release(locateHandle);
                     return null;
                 }
