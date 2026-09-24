@@ -41,10 +41,10 @@ namespace Ouroboros.Common.Audio
         [SerializeField] public AudioMixerGroup sfxMixerGroup;
         [SerializeField] public AudioMixerGroup musicMixerGroup;
         [SerializeField] public AudioMixerGroup voiceMixerGroup;
-        [SerializeField] public string masterVolumeParameterName = "volume_master";
-        [SerializeField] public string musicVolumeParameterName = "volume_music";
-        [SerializeField] public string sfxVolumeParameterName = "volume_sfx";
-        [SerializeField] public string voiceVolumeParameterName = "volume_voice";
+        [SerializeField] public string masterVolumeParameterName = "master_volume";
+        [SerializeField] public string musicVolumeParameterName = "music_volume";
+        [SerializeField] public string sfxVolumeParameterName = "sfx_volume";
+        [SerializeField] public string voiceVolumeParameterName = "voice_volume";
 
         [Range(0f, 1f)]
         [FormerlySerializedAs("MasterVolume")]
@@ -170,22 +170,22 @@ namespace Ouroboros.Common.Audio
             SetMasterVolume(masterVolume);
             SetMusicMixerVolume(musicVolume);
             SetSFXMixerVolume(sfxVolume);
-            mixer.SetFloat("voice_volume", CalculateVolume(voiceVolume));
+            mixer.SetFloat(voiceVolumeParameterName, CalculateVolume(voiceVolume));
         }
 
         private void SetMusicMixerVolume(float volume)
         {
-            mixer.SetFloat("music_volume", CalculateVolume(volume));
+            mixer.SetFloat(musicVolumeParameterName, CalculateVolume(volume));
         }
 
         private void SetSFXMixerVolume(float volume)
         {
-            mixer.SetFloat("sfx_volume", CalculateVolume(volume));
+            mixer.SetFloat(sfxVolumeParameterName, CalculateVolume(volume));
         }
 
         private void SetVoiceMixerVolume(float volume)
         {
-            mixer.SetFloat("voice_volume", CalculateVolume(volume));
+            mixer.SetFloat(voiceVolumeParameterName, CalculateVolume(volume));
         }
 
         private void OnDestroy()
