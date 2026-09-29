@@ -23,6 +23,8 @@ namespace Ouroboros.Common.Audio
 
         private void OnButtonClick()
         {
+            if (string.IsNullOrEmpty(clickAudioId)) return;
+
             AudioManager.PlaySound(new PlayAudioPayload
             {
                 id = clickAudioId,
